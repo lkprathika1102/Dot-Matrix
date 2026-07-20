@@ -1,0 +1,102 @@
+:root {
+    --bg-color: #0d0e0c;
+    --border-color: #4a4d3f;
+    --text-color: #b0b39a;
+    --accent-color: #ffdf80;
+    --label-color: #6b6d5f;
+    --font-main: 'Courier New', Courier, monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-main);
+    font-size: 12px;
+    text-transform: uppercase;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+}
+
+#shell {
+    display: grid;
+    grid-template-rows: 35px 1fr;
+    height: 100vh;
+    width: 100vw;
+}
+
+#bar {
+    display: flex;
+    gap: 30px;
+    padding: 0 15px;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    background: #0a0b09;
+}
+
+.group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.label {
+    color: var(--label-color);
+    font-weight: bold;
+}
+
+.value {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+#workspace {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+}
+
+#canvas-container {
+    position: relative;
+    background: #000;
+    overflow: hidden;
+}
+
+#main-viewport {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#telemetry-deck {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    border-left: 1px solid var(--border-color);
+    background: var(--bg-color);
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel-header {
+    background: var(--border-color);
+    color: var(--bg-color);
+    padding: 4px 8px;
+    font-weight: bold;
+    font-size: 10px;
+}
+
+.log-content, .metrics-content {
+    padding: 10px;
+    font-size: 11px;
+    color: var(--text-color);
+    overflow-y: auto;
+}
