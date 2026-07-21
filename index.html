@@ -18,24 +18,20 @@
                 <span class="label">NODES:</span>
                 <span id="node-val" class="value">0</span>
             </div>
+            <div class="group">
+                <button id="undo-btn" class="ui-btn">UNDO</button>
+                <button id="redo-btn" class="ui-btn">REDO</button>
+                <button id="save-btn" class="ui-btn">SAVE_PNG</button>
+            </div>
             <div class="group" style="margin-left: auto;">
-                <span id="sys-status" class="value">SYSTEM_READY</span>
+                <input type="checkbox" id="toggle-gen" checked>
+                <span class="label">AUTO_GEN</span>
             </div>
         </header>
         <main id="workspace">
             <div id="canvas-container">
                 <canvas id="main-viewport"></canvas>
             </div>
-            <aside id="telemetry-deck">
-                <div class="panel">
-                    <div class="panel-header">SYSTEM_LOG</div>
-                    <div id="log-output" class="log-content"></div>
-                </div>
-                <div class="panel">
-                    <div class="panel-header">CORE_METRICS</div>
-                    <div id="metrics-readout" class="metrics-content"></div>
-                </div>
-            </aside>
         </main>
     </div>
     <script src="engine.js"></script>
