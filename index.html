@@ -11,6 +11,10 @@
     <div id="shell">
         <header id="bar">
             <div class="group">
+                <input type="checkbox" id="toggle-gen" checked>
+                <span class="label">AUTO_GEN</span>
+            </div>
+            <div class="group">
                 <span class="label">COORD:</span>
                 <span id="coord-val" class="value">0, 0</span>
             </div>
@@ -21,11 +25,9 @@
             <div class="group">
                 <button id="undo-btn" class="ui-btn">UNDO</button>
                 <button id="redo-btn" class="ui-btn">REDO</button>
-                <button id="save-btn" class="ui-btn">SAVE_PNG</button>
             </div>
             <div class="group" style="margin-left: auto;">
-                <input type="checkbox" id="toggle-gen" checked>
-                <span class="label">AUTO_GEN</span>
+                <button id="save-btn" class="ui-btn">SAVE_PNG</button>
             </div>
         </header>
         <main id="workspace">

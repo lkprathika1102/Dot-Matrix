@@ -1,0 +1,5 @@
+@keyframes save-glow {
+    0% { box-shadow: 0 0 2px rgba(255, 223, 128, 0.2); }
+    50% { box-shadow: 0 0 10px rgba(255, 223, 128, 0.5); }
+    100% { box-shadow: 0 0 2px rgba(255, 223, 128, 0.2); }
+}

@@ -64,10 +64,8 @@ class DotEngine {
             ctx.lineTo(this.viewportState.width, y);
         }
         
-        
         ctx.stroke();
     }
-
 
     drawOverlay() {
         const ctx = this.ctx;
