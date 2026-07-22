@@ -32,6 +32,10 @@ const App = {
         UI.viewport.addEventListener('contextmenu', (e) => e.preventDefault());
 
         UI.viewport.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+                const world = window.DotEngine.screenToWorld(e.clientX, e.clientY);
+                window.DotEngine.addNode(world.x, world.y);
+            }
             if (e.button === 2) {
                 window.DotEngine.setDragging(true);
                 window.DotEngine.setLastMousePos(e.clientX, e.clientY);
@@ -59,6 +63,7 @@ const App = {
     loop() {
         window.DotEngine.update();
         window.DotEngine.render();
+        UI.nodes.textContent = window.DotEngine.nodes.length;
         requestAnimationFrame(() => this.loop());
     }
 };

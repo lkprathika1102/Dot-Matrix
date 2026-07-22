@@ -5,6 +5,7 @@ class DotEngine {
         this.isDragging = false;
         this.lastMouseX = 0;
         this.lastMouseY = 0;
+        this.nodes = [];
         this.viewportState = {
             x: 0,
             y: 0,
@@ -26,6 +27,10 @@ class DotEngine {
     setLastMousePos(x, y) {
         this.lastMouseX = x;
         this.lastMouseY = y;
+    }
+
+    addNode(wx, wy) {
+        this.nodes.push({ x: wx, y: wy });
     }
 
     pan(mouseX, mouseY) {
@@ -72,6 +77,7 @@ class DotEngine {
     render() {
         this.clear();
         this.drawGrid();
+        this.drawNodes();
         this.drawOverlay();
     }
 
@@ -101,6 +107,18 @@ class DotEngine {
         }
         
         ctx.stroke();
+    }
+
+    drawNodes() {
+        const ctx = this.ctx;
+        ctx.fillStyle = '#ffdf80';
+        
+        for (let i = 0; i < this.nodes.length; i++) {
+            const node = this.nodes[i];
+            const screen = this.worldToScreen(node.x, node.y);
+            
+            ctx.fillRect(screen.x - 2, screen.y - 2, 4, 4);
+        }
     }
 
     drawOverlay() {
