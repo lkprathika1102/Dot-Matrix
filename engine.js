@@ -2,6 +2,9 @@ class DotEngine {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
+        this.isDragging = false;
+        this.lastMouseX = 0;
+        this.lastMouseY = 0;
         this.viewportState = {
             x: 0,
             y: 0,
@@ -14,6 +17,39 @@ class DotEngine {
     updateViewportSize() {
         this.viewportState.width = this.canvas.width;
         this.viewportState.height = this.canvas.height;
+    }
+
+    setDragging(state) {
+        this.isDragging = state;
+    }
+
+    setLastMousePos(x, y) {
+        this.lastMouseX = x;
+        this.lastMouseY = y;
+    }
+
+    pan(mouseX, mouseY) {
+        const dx = mouseX - this.lastMouseX;
+        const dy = mouseY - this.lastMouseY;
+        
+        this.viewportState.x += dx;
+        this.viewportState.y += dy;
+        
+        this.lastMouseX = mouseX;
+        this.lastMouseY = mouseY;
+    }
+
+    zoom(delta, mouseX, mouseY) {
+        const zoomSpeed = 0.001;
+        const factor = Math.exp(-delta * zoomSpeed);
+        const oldZoom = this.viewportState.zoom;
+        const newZoom = Math.min(Math.max(oldZoom * factor, 0.01), 10);
+        
+        const worldPos = this.screenToWorld(mouseX, mouseY);
+        this.viewportState.zoom = newZoom;
+        
+        this.viewportState.x = mouseX - worldPos.x * newZoom;
+        this.viewportState.y = mouseY - worldPos.y * newZoom;
     }
 
     screenToWorld(sx, sy) {
