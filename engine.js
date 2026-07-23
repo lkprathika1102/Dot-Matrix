@@ -3,6 +3,7 @@ class DotEngine {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.isDragging = false;
+        this.isDrawing = false;
         this.lastMouseX = 0;
         this.lastMouseY = 0;
         this.nodes = [];
@@ -24,12 +25,21 @@ class DotEngine {
         this.isDragging = state;
     }
 
+    setDrawing(state) {
+        this.isDrawing = state;
+    }
+
     setLastMousePos(x, y) {
         this.lastMouseX = x;
         this.lastMouseY = y;
     }
 
     addNode(wx, wy) {
+        if (this.nodes.length > 0) {
+            const lastNode = this.nodes[this.nodes.length - 1];
+            const dist = Math.hypot(wx - lastNode.x, wy - lastNode.y);
+            if (dist < 5) return;
+        }
         this.nodes.push({ x: wx, y: wy });
     }
 
@@ -116,7 +126,6 @@ class DotEngine {
         for (let i = 0; i < this.nodes.length; i++) {
             const node = this.nodes[i];
             const screen = this.worldToScreen(node.x, node.y);
-            
             ctx.fillRect(screen.x - 2, screen.y - 2, 4, 4);
         }
     }

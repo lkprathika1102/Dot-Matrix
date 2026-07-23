@@ -33,6 +33,7 @@ const App = {
 
         UI.viewport.addEventListener('mousedown', (e) => {
             if (e.button === 0) {
+                window.DotEngine.setDrawing(true);
                 const world = window.DotEngine.screenToWorld(e.clientX, e.clientY);
                 window.DotEngine.addNode(world.x, world.y);
             }
@@ -44,12 +45,19 @@ const App = {
 
         window.addEventListener('mouseup', () => {
             window.DotEngine.setDragging(false);
+            window.DotEngine.setDrawing(false);
         });
 
         window.addEventListener('mousemove', (e) => {
             if (window.DotEngine.isDragging) {
                 window.DotEngine.pan(e.clientX, e.clientY);
             }
+            
+            if (window.DotEngine.isDrawing) {
+                const world = window.DotEngine.screenToWorld(e.clientX, e.clientY);
+                window.DotEngine.addNode(world.x, world.y);
+            }
+
             const world = window.DotEngine.screenToWorld(e.clientX, e.clientY);
             UI.coords.textContent = `${world.x.toFixed(0)}, ${world.y.toFixed(0)}`;
         });
