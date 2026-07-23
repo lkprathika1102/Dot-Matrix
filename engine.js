@@ -7,6 +7,7 @@ class DotEngine {
         this.lastMouseX = 0;
         this.lastMouseY = 0;
         this.nodes = [];
+        this.connectDistance = 150;
         this.viewportState = {
             x: 0,
             y: 0,
@@ -43,6 +44,10 @@ class DotEngine {
         this.nodes.push({ x: wx, y: wy });
     }
 
+    clearNodes() {
+        this.nodes = [];
+    }
+
     pan(mouseX, mouseY) {
         const dx = mouseX - this.lastMouseX;
         const dy = mouseY - this.lastMouseY;
@@ -70,7 +75,7 @@ class DotEngine {
     screenToWorld(sx, sy) {
         return {
             x: (sx - this.viewportState.x) / this.viewportState.zoom,
-            y: (sy - this.viewportState.y) / this.viewportState.zoom
+            y: (sy - 35 - this.viewportState.y) / this.viewportState.zoom
         };
     }
 
@@ -87,6 +92,7 @@ class DotEngine {
     render() {
         this.clear();
         this.drawGrid();
+        this.drawConnections();
         this.drawNodes();
         this.drawOverlay();
     }
@@ -117,6 +123,29 @@ class DotEngine {
         }
         
         ctx.stroke();
+    }
+
+    drawConnections() {
+        const ctx = this.ctx;
+        ctx.strokeStyle = '#4a4d3f';
+        ctx.lineWidth = 1;
+        
+        for (let i = 0; i < this.nodes.length; i++) {
+            for (let j = i + 1; j < this.nodes.length; j++) {
+                const n1 = this.nodes[i];
+                const n2 = this.nodes[j];
+                const dist = Math.hypot(n1.x - n2.x, n1.y - n2.y);
+                
+                if (dist < this.connectDistance) {
+                    const s1 = this.worldToScreen(n1.x, n1.y);
+                    const s2 = this.worldToScreen(n2.x, n2.y);
+                    ctx.beginPath();
+                    ctx.moveTo(s1.x, s1.y);
+                    ctx.lineTo(s2.x, s2.y);
+                    ctx.stroke();
+                }
+            }
+        }
     }
 
     drawNodes() {

@@ -2,7 +2,8 @@ const UI = {
     coords: document.getElementById('coord-val'),
     nodes: document.getElementById('node-val'),
     viewport: document.getElementById('main-viewport'),
-    toggleGen: document.getElementById('toggle-gen')
+    toggleGen: document.getElementById('toggle-gen'),
+    clearBtn: document.getElementById('clear-btn')
 };
 
 const App = {
@@ -66,6 +67,10 @@ const App = {
             e.preventDefault();
             window.DotEngine.zoom(e.deltaY, e.clientX, e.clientY);
         }, { passive: false });
+
+        UI.clearBtn.addEventListener('click', () => {
+            window.DotEngine.clearNodes();
+        });
     },
 
     loop() {
