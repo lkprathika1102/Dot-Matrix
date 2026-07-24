@@ -7,7 +7,11 @@ class DotEngine {
         this.lastMouseX = 0;
         this.lastMouseY = 0;
         this.nodes = [];
+        this.spatialHash = {};
+        this.history = [];
+        this.redoStack = [];
         this.connectDistance = 150;
+        this.chunkSize = 400;
         this.viewportState = {
             x: 0,
             y: 0,
@@ -35,26 +39,64 @@ class DotEngine {
         this.lastMouseY = y;
     }
 
+    getChunkKey(wx, wy) {
+        const cx = Math.floor(wx / this.chunkSize);
+        const cy = Math.floor(wy / this.chunkSize);
+        return `${cx},${cy}`;
+    }
+
+    saveState() {
+        this.history.push(JSON.stringify(this.nodes));
+        if (this.history.length > 50) this.history.shift();
+        this.redoStack = [];
+    }
+
+    undo() {
+        if (this.history.length === 0) return;
+        this.redoStack.push(JSON.stringify(this.nodes));
+        this.nodes = JSON.parse(this.history.pop());
+        this.rebuildSpatialHash();
+    }
+
+    redo() {
+        if (this.redoStack.length === 0) return;
+        this.history.push(JSON.stringify(this.nodes));
+        this.nodes = JSON.parse(this.redoStack.pop());
+        this.rebuildSpatialHash();
+    }
+
+    rebuildSpatialHash() {
+        this.spatialHash = {};
+        this.nodes.forEach(node => {
+            const key = this.getChunkKey(node.x, node.y);
+            if (!this.spatialHash[key]) this.spatialHash[key] = [];
+            this.spatialHash[key].push(node);
+        });
+    }
+
     addNode(wx, wy) {
         if (this.nodes.length > 0) {
             const lastNode = this.nodes[this.nodes.length - 1];
             const dist = Math.hypot(wx - lastNode.x, wy - lastNode.y);
             if (dist < 5) return;
         }
-        this.nodes.push({ x: wx, y: wy });
+        const node = { x: wx, y: wy };
+        this.nodes.push(node);
+        const key = this.getChunkKey(wx, wy);
+        if (!this.spatialHash[key]) this.spatialHash[key] = [];
+        this.spatialHash[key].push(node);
     }
 
     clearNodes() {
         this.nodes = [];
+        this.spatialHash = {};
     }
 
     pan(mouseX, mouseY) {
         const dx = mouseX - this.lastMouseX;
         const dy = mouseY - this.lastMouseY;
-        
         this.viewportState.x += dx;
         this.viewportState.y += dy;
-        
         this.lastMouseX = mouseX;
         this.lastMouseY = mouseY;
     }
@@ -64,10 +106,8 @@ class DotEngine {
         const factor = Math.exp(-delta * zoomSpeed);
         const oldZoom = this.viewportState.zoom;
         const newZoom = Math.min(Math.max(oldZoom * factor, 0.01), 10);
-        
         const worldPos = this.screenToWorld(mouseX, mouseY);
         this.viewportState.zoom = newZoom;
-        
         this.viewportState.x = mouseX - worldPos.x * newZoom;
         this.viewportState.y = mouseY - worldPos.y * newZoom;
     }
@@ -86,14 +126,50 @@ class DotEngine {
         };
     }
 
+    generateDeterministicNodes(cx, cy) {
+        const seed = (cx * 73856093) ^ (cy * 19349663);
+        const points = [];
+        const count = (Math.abs(seed) % 3) + 1;
+        for (let i = 0; i < count; i++) {
+            const px = (Math.abs(seed ^ (i * 12345)) % this.chunkSize);
+            const py = (Math.abs(seed ^ (i * 67890)) % this.chunkSize);
+            points.push({ x: cx * this.chunkSize + px, y: cy * this.chunkSize + py });
+        }
+        return points;
+    }
+
     update() {
     }
 
-    render() {
+    render(autoGen) {
         this.clear();
         this.drawGrid();
-        this.drawConnections();
-        this.drawNodes();
+        
+        const topLeft = this.screenToWorld(0, 0);
+        const bottomRight = this.screenToWorld(this.viewportState.width, this.viewportState.height);
+        const startCX = Math.floor(topLeft.x / this.chunkSize);
+        const startCY = Math.floor(topLeft.y / this.chunkSize);
+        const endCX = Math.floor(bottomRight.x / this.chunkSize);
+        const endCY = Math.floor(bottomRight.y / this.chunkSize);
+
+        let visibleNodes = [];
+        let activeChunks = [];
+
+        for (let cx = startCX; cx <= endCX; cx++) {
+            for (let cy = startCY; cy <= endCY; cy++) {
+                const key = `${cx},${cy}`;
+                activeChunks.push({cx, cy, key});
+                if (this.spatialHash[key]) {
+                    visibleNodes.push(...this.spatialHash[key]);
+                }
+                if (autoGen) {
+                    visibleNodes.push(...this.generateDeterministicNodes(cx, cy));
+                }
+            }
+        }
+
+        this.drawConnections(visibleNodes, activeChunks);
+        this.drawNodes(visibleNodes);
         this.drawOverlay();
     }
 
@@ -107,54 +183,57 @@ class DotEngine {
         ctx.strokeStyle = '#1a1c17';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        
         const step = 100 * this.viewportState.zoom;
         const startX = this.viewportState.x % step;
         const startY = this.viewportState.y % step;
-        
         for (let x = startX; x < this.viewportState.width; x += step) {
             ctx.moveTo(x, 0);
             ctx.lineTo(x, this.viewportState.height);
         }
-        
         for (let y = startY; y < this.viewportState.height; y += step) {
             ctx.moveTo(0, y);
             ctx.lineTo(this.viewportState.width, y);
         }
-        
         ctx.stroke();
     }
 
-    drawConnections() {
+    drawConnections(nodes, activeChunks) {
         const ctx = this.ctx;
         ctx.strokeStyle = '#4a4d3f';
         ctx.lineWidth = 1;
         
-        for (let i = 0; i < this.nodes.length; i++) {
-            for (let j = i + 1; j < this.nodes.length; j++) {
-                const n1 = this.nodes[i];
-                const n2 = this.nodes[j];
-                const dist = Math.hypot(n1.x - n2.x, n1.y - n2.y);
-                
-                if (dist < this.connectDistance) {
-                    const s1 = this.worldToScreen(n1.x, n1.y);
-                    const s2 = this.worldToScreen(n2.x, n2.y);
-                    ctx.beginPath();
-                    ctx.moveTo(s1.x, s1.y);
-                    ctx.lineTo(s2.x, s2.y);
-                    ctx.stroke();
+        for (let i = 0; i < nodes.length; i++) {
+            const n1 = nodes[i];
+            const cx = Math.floor(n1.x / this.chunkSize);
+            const cy = Math.floor(n1.y / this.chunkSize);
+
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const key = `${cx + dx},${cy + dy}`;
+                    const neighbors = this.spatialHash[key] || [];
+                    
+                    neighbors.forEach(n2 => {
+                        if (n1 === n2) return;
+                        const dist = Math.hypot(n1.x - n2.x, n1.y - n2.y);
+                        if (dist < this.connectDistance) {
+                            const s1 = this.worldToScreen(n1.x, n1.y);
+                            const s2 = this.worldToScreen(n2.x, n2.y);
+                            ctx.beginPath();
+                            ctx.moveTo(s1.x, s1.y);
+                            ctx.lineTo(s2.x, s2.y);
+                            ctx.stroke();
+                        }
+                    });
                 }
             }
         }
     }
 
-    drawNodes() {
+    drawNodes(nodes) {
         const ctx = this.ctx;
         ctx.fillStyle = '#ffdf80';
-        
-        for (let i = 0; i < this.nodes.length; i++) {
-            const node = this.nodes[i];
-            const screen = this.worldToScreen(node.x, node.y);
+        for (let i = 0; i < nodes.length; i++) {
+            const screen = this.worldToScreen(nodes[i].x, nodes[i].y);
             ctx.fillRect(screen.x - 2, screen.y - 2, 4, 4);
         }
     }

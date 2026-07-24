@@ -3,7 +3,9 @@ const UI = {
     nodes: document.getElementById('node-val'),
     viewport: document.getElementById('main-viewport'),
     toggleGen: document.getElementById('toggle-gen'),
-    clearBtn: document.getElementById('clear-btn')
+    clearBtn: document.getElementById('clear-btn'),
+    undoBtn: document.getElementById('undo-btn'),
+    redoBtn: document.getElementById('redo-btn')
 };
 
 const App = {
@@ -34,6 +36,7 @@ const App = {
 
         UI.viewport.addEventListener('mousedown', (e) => {
             if (e.button === 0) {
+                window.DotEngine.saveState();
                 window.DotEngine.setDrawing(true);
                 const world = window.DotEngine.screenToWorld(e.clientX, e.clientY);
                 window.DotEngine.addNode(world.x, world.y);
@@ -69,13 +72,22 @@ const App = {
         }, { passive: false });
 
         UI.clearBtn.addEventListener('click', () => {
+            window.DotEngine.saveState();
             window.DotEngine.clearNodes();
+        });
+
+        UI.undoBtn.addEventListener('click', () => {
+            window.DotEngine.undo();
+        });
+
+        UI.redoBtn.addEventListener('click', () => {
+            window.DotEngine.redo();
         });
     },
 
     loop() {
         window.DotEngine.update();
-        window.DotEngine.render();
+        window.DotEngine.render(UI.toggleGen.checked);
         UI.nodes.textContent = window.DotEngine.nodes.length;
         requestAnimationFrame(() => this.loop());
     }
