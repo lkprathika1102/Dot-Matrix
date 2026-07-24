@@ -5,7 +5,8 @@ const UI = {
     toggleGen: document.getElementById('toggle-gen'),
     clearBtn: document.getElementById('clear-btn'),
     undoBtn: document.getElementById('undo-btn'),
-    redoBtn: document.getElementById('redo-btn')
+    redoBtn: document.getElementById('redo-btn'),
+    saveBtn: document.getElementById('save-btn')
 };
 
 const App = {
@@ -82,6 +83,10 @@ const App = {
 
         UI.redoBtn.addEventListener('click', () => {
             window.DotEngine.redo();
+        });
+
+        UI.saveBtn.addEventListener('click', () => {
+            window.DotEngine.exportPNG();
         });
     },
 

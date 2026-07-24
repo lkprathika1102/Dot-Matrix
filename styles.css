@@ -71,6 +71,18 @@ body {
     color: var(--bg-color);
 }
 
+#save-btn {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    font-weight: bold;
+    animation: save-glow 2s infinite ease-in-out;
+}
+
+#save-btn:hover {
+    background: var(--accent-color);
+    color: var(--bg-color);
+}
+
 #workspace {
     display: block;
     height: calc(100vh - 35px);

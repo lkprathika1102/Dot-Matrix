@@ -138,6 +138,68 @@ class DotEngine {
         return points;
     }
 
+    exportPNG() {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = this.viewportState.width;
+        offCanvas.height = this.viewportState.height;
+        const octx = offCanvas.getContext('2d');
+        
+        octx.fillStyle = '#000';
+        octx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+        
+        const scaledStep = 100 * this.viewportState.zoom;
+        octx.strokeStyle = '#1a1c17';
+        octx.lineWidth = 1;
+        octx.beginPath();
+        for (let x = this.viewportState.x % scaledStep; x < offCanvas.width; x += scaledStep) {
+            octx.moveTo(x, 0); octx.lineTo(x, offCanvas.height);
+        }
+        for (let y = this.viewportState.y % scaledStep; y < offCanvas.height; y += scaledStep) {
+            octx.moveTo(0, y); octx.lineTo(offCanvas.width, y);
+        }
+        octx.stroke();
+
+        const topLeft = this.screenToWorld(0, 0);
+        const bottomRight = this.screenToWorld(offCanvas.width, offCanvas.height);
+        const startCX = Math.floor(topLeft.x / this.chunkSize);
+        const startCY = Math.floor(topLeft.y / this.chunkSize);
+        const endCX = Math.floor(bottomRight.x / this.chunkSize);
+        const endCY = Math.floor(bottomRight.y / this.chunkSize);
+
+        let renderNodes = [...this.nodes];
+        for (let cx = startCX; cx <= endCX; cx++) {
+            for (let cy = startCY; cy <= endCY; cy++) {
+                renderNodes.push(...this.generateDeterministicNodes(cx, cy));
+            }
+        }
+
+        octx.strokeStyle = '#4a4d3f';
+        for (let i = 0; i < renderNodes.length; i++) {
+            for (let j = i + 1; j < renderNodes.length; j++) {
+                const dist = Math.hypot(renderNodes[i].x - renderNodes[j].x, renderNodes[i].y - renderNodes[j].y);
+                if (dist < this.connectDistance) {
+                    const s1 = this.worldToScreen(renderNodes[i].x, renderNodes[i].y);
+                    const s2 = this.worldToScreen(renderNodes[j].x, renderNodes[j].y);
+                    octx.beginPath();
+                    octx.moveTo(s1.x, s1.y);
+                    octx.lineTo(s2.x, s2.y);
+                    octx.stroke();
+                }
+            }
+        }
+
+        octx.fillStyle = '#ffdf80';
+        renderNodes.forEach(n => {
+            const s = this.worldToScreen(n.x, n.y);
+            octx.fillRect(s.x - 2, s.y - 2, 4, 4);
+        });
+
+        const link = document.createElement('a');
+        link.download = `dot-matrix_capture_${Date.now()}.png`;
+        link.href = offCanvas.toDataURL('image/png', 1.0);
+        link.click();
+    }
+
     update() {
     }
 
@@ -201,7 +263,6 @@ class DotEngine {
         const ctx = this.ctx;
         ctx.strokeStyle = '#4a4d3f';
         ctx.lineWidth = 1;
-        
         for (let i = 0; i < nodes.length; i++) {
             const n1 = nodes[i];
             const cx = Math.floor(n1.x / this.chunkSize);
@@ -211,7 +272,6 @@ class DotEngine {
                 for (let dy = -1; dy <= 1; dy++) {
                     const key = `${cx + dx},${cy + dy}`;
                     const neighbors = this.spatialHash[key] || [];
-                    
                     neighbors.forEach(n2 => {
                         if (n1 === n2) return;
                         const dist = Math.hypot(n1.x - n2.x, n1.y - n2.y);
